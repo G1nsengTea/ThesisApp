@@ -1,0 +1,457 @@
+﻿<Window x:Class="ThesisApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ThesisApp"
+        xmlns:ed="http://schemas.microsoft.com/expression/2010/drawing"
+        mc:Ignorable="d" FontSize="17" FontFamily="Segoe UI Semilight"
+        MinHeight="700" MinWidth="1000"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        
+        <!-- Define styles for UI elements -->
+        <!--#region Styles-->
+        <Style TargetType="Button" x:Key="btnStyleBase">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Padding" Value="25,4"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#484a59"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Foreground" Value="Gray"/>
+                </Trigger>
+                <MultiTrigger>
+                    <MultiTrigger.Conditions>
+                        <Condition Property="IsEnabled" Value="False"/>
+                        <Condition Property="Tag" Value="Clicked"/>
+                    </MultiTrigger.Conditions>
+                    <Setter Property="Foreground" Value="Gray"/>
+                    <Setter Property="Background" Value="SpringGreen"/>
+                </MultiTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Style for all buttons except for Exit and Help buttons-->
+        <Style TargetType="Button" BasedOn="{StaticResource btnStyleBase}" x:Key="btnStyle">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"
+                                              Margin="25,4"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style for Exit and Help buttons-->
+        <Style TargetType="Button" BasedOn="{StaticResource btnStyleBase}" x:Key="capitalBtnStyle">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Margin="25,4"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ed:Arc" x:Key="innerArcStyle">
+            <Setter Property="Fill" Value="#21222b"/>
+            <Setter Property="Stretch" Value="None"/>
+            <Setter Property="ArcThickness" Value="2"/>
+            <Setter Property="Width" Value="85"/>
+            <Setter Property="Height" Value="85"/>
+            <Setter Property="ArcThicknessUnit" Value="Pixel"/>
+            <Setter Property="EndAngle" Value="360"/>
+            <Setter Property="Grid.Column" Value="1"/>
+        </Style>
+
+        <Style TargetType="ed:Arc" x:Key="outerArcStyle">            
+            <Setter Property="Stretch" Value="None"/>
+            <Setter Property="ArcThickness" Value="7"/>
+            <Setter Property="Width" Value="90"/>
+            <Setter Property="Height" Value="90"/>
+            <Setter Property="ArcThicknessUnit" Value="Pixel"/>
+            <Setter Property="EndAngle" Value="0"/>
+            <Setter Property="Grid.Column" Value="1"/>
+        </Style>
+        <!--#endregion-->
+
+    </Window.Resources>
+
+    <!-- Main grid-->
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Grid with the dark background for the user controls-->
+        <!--#region Navigation Bar-->
+        <Grid Grid.Column="0" Background="#21222b">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Text="Threading Benchmark"
+                           Foreground="White" HorizontalAlignment="Center" FontSize="25" Margin="10"
+                           TextWrapping="Wrap" TextAlignment="Center"/>
+
+            <!-- DockPanel hold all UI elements-->
+            <DockPanel Grid.Row="1" LastChildFill="True">
+                <!-- StackPanel for all controls except for bottom Help and Exit buttons-->
+                <StackPanel Orientation="Vertical" DockPanel.Dock="Top">
+
+                    <Separator Background="White" Margin="20,0" VerticalAlignment="Stretch"/>
+
+                    <!--#region Execition Modes-->
+                    <TextBlock Text="Execution Mode" Foreground="LightGreen" HorizontalAlignment="Center"
+                           FontSize="20" Margin="10" />
+
+                    <StackPanel Orientation="Vertical">
+
+                        <Button Content="Synchronous Execution"
+                                Command="{Binding SyncTestCommand}"
+                                IsEnabled="{Binding SyncBtnIsEnabled}"
+                                Style="{StaticResource btnStyle}"/>
+
+                        <Button Content="Asynchronous Execution"
+                                Command="{Binding AsyncTestCommand}"
+                                IsEnabled="{Binding AsyncBtnIsEnabled}"
+                                Tag="{Binding AsyncBtnTag}"
+                                Style="{StaticResource btnStyle}"/>
+
+                        <Button Content="Parallel Execution"
+                            Style="{StaticResource btnStyle}"
+                            IsEnabled="{Binding ParallelBtnIsEnabled}"/>
+
+                        <Button x:Name="ParallelAsyncBtn" Content="Parallel + Async Execution"
+                            Style="{StaticResource btnStyle}"
+                            IsEnabled="False"/>
+
+                    </StackPanel>
+                    <!--#endregion-->
+
+                    <!--#region User Controls-->
+                    <TextBlock Text="Controls" Foreground="LightGreen" HorizontalAlignment="Center"
+                           FontSize="20" Margin="10" />
+
+                    <StackPanel Orientation="Vertical">
+
+                        <Button Content="Cancel Operation"
+                                Style="{StaticResource btnStyle}"
+                                Command="{Binding CancelCommand}"
+                                Tag="{Binding CancelBtnTag}"
+                                IsEnabled="{Binding CancelBtnIsEnabled}"/>
+
+                        <Button Content="Reset"
+                                Style="{StaticResource btnStyle}"
+                                Command="{Binding ResetCommand}"
+                                IsEnabled="{Binding ResetBtnIsEnabled}"/>
+
+                    </StackPanel>
+                    <!--#endregion-->
+
+                    <!--#region Results-->
+                    <TextBlock Text="Results" Foreground="LightGreen" HorizontalAlignment="Center"
+                           FontSize="20" Margin="10" />
+
+                    <!-- Grid which contains all timers and their labels-->
+                    <Grid HorizontalAlignment="Stretch" Margin="15,0">
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Labels for the timers -->
+                        <TextBlock Text="Test 1"
+                                   Grid.Column="0"
+                                   Grid.Row="0"
+                                   Foreground="White"                                   
+                                   HorizontalAlignment="Center" />
+
+                        <TextBlock Text="Test 2"
+                                   Grid.Column="1"
+                                   Grid.Row="0"
+                                   Foreground="White"                                   
+                                   HorizontalAlignment="Center" />
+
+                        <TextBlock Text="Test 3"
+                                   Grid.Column="2"
+                                   Grid.Row="0"
+                                   Foreground="White"                                   
+                                   HorizontalAlignment="Center" />
+
+                        <!-- Text for the timers -->
+                        <TextBlock
+                                   Text="{Binding ImageTestTimerText}"
+                                   FontFamily="pack://application:,,,/Resources/Fonts/#Digital-7"
+                                   Grid.Column="0"
+                                   Grid.Row="1"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center"/>
+
+                        <TextBlock
+                                   Text="{Binding PNumTestTimerText}"
+                                   FontFamily="pack://application:,,,/Resources/Fonts/#Digital-7"
+                                   Grid.Column="1"
+                                   Grid.Row="1"
+                                   Foreground="White"                                   
+                                   HorizontalAlignment="Center" />
+
+                        <TextBlock
+                                   Text="{Binding WebsitesTestTimerText}"
+                                   FontFamily="pack://application:,,,/Resources/Fonts/#Digital-7"
+                                   Grid.Column="2"
+                                   Grid.Row="1"
+                                   Foreground="White"                                   
+                                   HorizontalAlignment="Center" />
+
+                    </Grid>
+
+                    <TextBlock Text="Total Time" Foreground="White" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                    <TextBlock Text="{Binding TotalTimeText}"
+                               FontFamily="pack://application:,,,/Resources/Fonts/#Digital-7"
+                               Foreground="White"
+                               HorizontalAlignment="Center"/>
+                    <!--#endregion-->
+
+                </StackPanel>
+
+                <!-- StackPanel for the bottom buttons-->
+                <StackPanel Orientation="Vertical" DockPanel.Dock="Bottom" VerticalAlignment="Bottom">
+
+                    <Separator Background="White" Margin="20,0" VerticalAlignment="Stretch"/>
+
+                    <Button Content="Help"
+                            Style="{StaticResource capitalBtnStyle}" 
+                            Margin="0,10,0,0"
+                            Command="{Binding HelpCommand}"
+                            FontSize="20"
+                            Foreground="LightGreen"/>
+
+                    <Button Content="Exit"
+                            Style="{StaticResource capitalBtnStyle}"
+                            Command="{Binding ExitCommand}"
+                            FontSize="20"
+                            Foreground="Red"/>
+
+                </StackPanel>
+            </DockPanel>
+        </Grid>
+        <!--#endregion-->
+
+        <!--Grid for all tests UI -->
+        <!--#region Tests-->
+        <Grid Grid.Column="1" Margin="20,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height=".4*"/>
+            </Grid.RowDefinitions>
+            
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!--#region Image Test UI-->
+            <Image
+                   Grid.Row="0"
+                   Grid.Column="0"
+                   HorizontalAlignment="Center" 
+                   Source="{Binding ImageTestSource}"
+                   Margin="0,10"/>
+
+            <!--StackPanel for progress bar-->
+            <StackPanel Orientation="Vertical"
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        DockPanel.Dock="Right"
+                        VerticalAlignment="Center"
+                        Margin="0,0,0,10">
+
+                <TextBlock Text="Test 1"
+                           TextAlignment="Center"
+                           FontSize="25"
+                           VerticalAlignment="Center"
+                           Margin="3"/>
+
+                <Grid>
+                    <ed:Arc Style="{StaticResource innerArcStyle}" />
+
+                    <ed:Arc EndAngle="{Binding ImageTestArcAngle}"
+                            Style="{StaticResource outerArcStyle}"
+                            Fill ="{Binding ImageTestProgressBarColour}"/>
+
+                    <Image Source="pack://application:,,,/Resources/Images/Checkmark.png"
+                           Width="45" Height="45"
+                           Visibility="{Binding ImageTestCheckmarkVisibility}"/>
+                    
+                    <Image Source="pack://application:,,,/Resources/Images/Crossmark.png"
+                           Width="45" Height="45"
+                           Visibility="{Binding ImageTestCrossmarkVisibility}"/>
+                </Grid>
+            </StackPanel>
+            <!--#endregion-->
+
+            <!--#region Prime Numbers Test UI-->
+            <StackPanel Orientation="Vertical"                        
+                        Grid.Row="1"                        
+                        Grid.Column="0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Margin="0,10">
+                
+                <TextBlock FontSize="20"
+                           Text="{Binding PNumberRangeText}"                           
+                           TextAlignment="Center"
+                           Margin="0,5"/>
+                
+                <TextBlock FontSize="20"
+                           Text="{Binding PNumberNthText}"
+                           TextAlignment="Center"
+                           Margin="0,5"/>
+                
+            </StackPanel>
+
+            <!--StackPanel for progress bar-->
+            <StackPanel Orientation="Vertical"
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        DockPanel.Dock="Right"
+                        VerticalAlignment="Center"
+                        Margin="0,0,0,10">
+
+                <TextBlock Text="Test 2" TextAlignment="Center"
+                           VerticalAlignment="Center"
+                           FontSize="25"
+                           Margin="3"/>
+
+                <Grid>
+
+                    <ed:Arc Style="{StaticResource innerArcStyle}" />
+
+                    <ed:Arc Style="{StaticResource outerArcStyle}"
+                            EndAngle="{Binding PNumTestArcAngle}"
+                            Fill ="{Binding PNumTestProgressBarColour}"/>
+                    
+                    <Image Source="pack://application:,,,/Resources/Images/Checkmark.png"
+                           Width="45" Height="45" 
+                           Visibility="{Binding PNumTestCheckmarkVisibility}"/>
+
+                    <Image Source="pack://application:,,,/Resources/Images/Crossmark.png"
+                           Width="45" Height="45"
+                           Visibility="{Binding PNumTestCrossmarkVisibility}"/>
+                </Grid>
+
+            </StackPanel>
+            <!--#endregion-->
+
+            <!--#region Websites Test UI-->
+            <!-- Grid for images of websites icons-->
+            <Grid Grid.Row="2"
+                 Grid.Column="0"
+                 HorizontalAlignment="Center"
+                 Margin="0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Image Grid.Column="0" Grid.Row="0"
+                       Source="{Binding GoogleLogoSource}"
+                       Margin="17,5"/>
+                <Image Grid.Column="1" Grid.Row="0"
+                       Source="{Binding YouTubeLogoSource}"
+                       Margin="17,5"/>
+                <Image Grid.Column="2" Grid.Row="0"
+                       Source="{Binding FaceBookLogoSource}"
+                       Margin="17,5"/>
+                <Image Grid.Column="3" Grid.Row="0"
+                       Source="{Binding VSLogoSource}"
+                       Margin="17,5"/>
+                <Image Grid.Column="4" Grid.Row="0"
+                       Source="{Binding SpotifyLogoSource}"
+                       Margin="17,5"/>
+                <Image Grid.Column="0" Grid.Row="1"
+                       Source="{Binding TwitchLogoSource}"
+                       Margin="17,5"/>
+                <Image Grid.Column="1" Grid.Row="1"
+                       Source="{Binding RedditLogoSource}"
+                       Margin="17,5"/>
+                <Image Grid.Column="2" Grid.Row="1"
+                       Source="{Binding MicrosoftLogoSource}"
+                       Margin="17,5"/>
+                <Image Grid.Column="3" Grid.Row="1"
+                       Source="{Binding InstagramLogoSource}"
+                       Margin="17,5"/>
+                <Image Grid.Column="4" Grid.Row="1"
+                       Source="{Binding StackLogoSource}"
+                       Margin="17,5"/>
+
+            </Grid>
+
+            <!--StackPanel for progress bar-->
+            <StackPanel Orientation="Vertical"
+                        Grid.Row="2"
+                        Grid.Column="1"
+                        DockPanel.Dock="Right"
+                        VerticalAlignment="Center"
+                        Margin="0,0,0,10">
+
+                <TextBlock Text="Test 3"
+                           TextAlignment="Center"
+                           FontSize="25"
+                           Margin="3"/>
+
+                <Grid>
+
+                    <ed:Arc Style="{StaticResource innerArcStyle}"/>
+
+                    <ed:Arc Style="{StaticResource outerArcStyle}"
+                            EndAngle="{Binding WebsitesTestArcAngle}"
+                            Fill ="{Binding WebsitesTestProgressBarColour}"/>
+
+                    <Image Source="pack://application:,,,/Resources/Images/Checkmark.png"
+                           Width="45" Height="45" 
+                           Visibility="{Binding WebsitesTestCheckmarkVisibility}"/>
+
+                    <Image Source="pack://application:,,,/Resources/Images/Crossmark.png"
+                           Width="45" Height="45"
+                           Visibility="{Binding WebsitesTestCrossmarkVisibility}"/>
+                </Grid>
+            </StackPanel>
+            <!--#endregion-->
+
+        </Grid>
+        <!--#endregion-->
+    </Grid>
+</Window>
