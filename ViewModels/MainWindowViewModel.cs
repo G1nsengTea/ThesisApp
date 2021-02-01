@@ -74,7 +74,7 @@ namespace ThesisApp.ViewModels
         private string _cancelBtnTag;
         private bool _syncBtnIsEnabled = true;
         private bool _asyncBtnIsEnabled = true;
-        private bool _parallelBtnIsEnabled = false;
+        private bool _parallelBtnIsEnabled = true;
         private bool _parallelAsyncBtnIsEnabled;
         private bool _resetBtnIsEnabled = false;
         private bool _cancelBthIsEnabled = false;
@@ -442,6 +442,7 @@ namespace ThesisApp.ViewModels
         private ICommand _helpCommand;
         private ICommand _exitCommand;
         private ICommand _cancelCommand;
+        private ICommand _parallelTestCommand;
         #endregion
 
         #region Public Part
@@ -471,6 +472,20 @@ namespace ThesisApp.ViewModels
                         );
                 }
                 return _asyncTestCommand;
+            }
+        }
+        public ICommand ParallelTestCommand
+        {
+            get
+            {
+                if (_parallelTestCommand == null)
+                {
+                    _parallelTestCommand = new RelayCommand(
+                        obj => ParallelTest(),
+                        obj => CanParallelTest()
+                        );
+                }
+                return _parallelTestCommand;
             }
         }
         public ICommand ResetCommand
@@ -558,6 +573,10 @@ namespace ThesisApp.ViewModels
         {
             return CancelBtnIsEnabled;
         }
+        private bool CanParallelTest()
+        {
+            return ParallelBtnIsEnabled;
+        }
         #endregion
 
         /// <summary>
@@ -595,7 +614,7 @@ namespace ThesisApp.ViewModels
 
             //Enable Reset button to let the user observe the results
             //and then reset UI before next run
-            SyncBtnIsEnabled = false;
+            SyncBtnIsEnabled = ParallelBtnIsEnabled = false;
             ResetBtnIsEnabled = true;
 
             //Stop Total timer and update all timers
@@ -686,6 +705,59 @@ namespace ThesisApp.ViewModels
             TotalTimeWatch.Stop();
             DTime.Stop();
         }
+        private void ParallelTest()
+        {
+            TotalTimeWatch.Start();
+
+            //Initialize instances of Progress class that are later used to trigger
+            //the events that update UI
+            Progress<ImageTestReportModel> imageTestProgress = new Progress<ImageTestReportModel>();
+            imageTestProgress.ProgressChanged += ImageTestProgressEvent;
+            Progress<PNumTestReportModel> pNumTestProgress = new Progress<PNumTestReportModel>();
+            pNumTestProgress.ProgressChanged += PNumTestProgressEvent;
+            Progress<WebsitesTestReportModel> websitesTestProgress = new Progress<WebsitesTestReportModel>();
+            websitesTestProgress.ProgressChanged += WebsitesTestProgressEvent;
+
+            
+            ImageTestWatch.Start();
+            PNumTestWatch.Start();
+            WebsitesTestWatch.Start();
+
+            //Start executing all tasks in parallel
+            //Once a task is completed continue it and update UI parameters
+            Task ImageTestTask = Task.Run(() => ImageTest.StartSync(imageTestProgress))
+                .ContinueWith(ant =>
+                {
+                    ImageTestWatch.Stop();
+                    ImageTestCheckmarkVisibility = Visibility.Visible;
+                });
+
+            Task PNumTestTask = Task.Run(() => PrimeNumbersTest.StartSync(pNumTestProgress, pNumRangeTest, pNumNthTest))
+                .ContinueWith(ant =>
+                {
+                    PNumTestWatch.Stop();
+                    PNumTestCheckmarkVisibility = Visibility.Visible;
+                });
+            Task WebsitesTestTask = Task.Run(() => WebsitesTest.StartSync(websitesTestProgress))
+                .ContinueWith(ant =>
+                {
+                    WebsitesTestWatch.Stop();
+                    WebsitesTestCheckmarkVisibility = Visibility.Visible;
+                });
+
+            //Wait untill all tasks are finished. UI thread is blocked.
+            Task.WaitAll(ImageTestTask, PNumTestTask, WebsitesTestTask);
+
+
+            //Enable Reset button to let the user observe the results
+            //and then reset UI before next run
+            SyncBtnIsEnabled = ParallelBtnIsEnabled = false;
+            ResetBtnIsEnabled = true;
+
+            //Stop Total timer and update all timers
+            TotalTimeWatch.Stop();
+            UpdateTimers(this, new EventArgs());
+        }
         private void Help()
         {
             HelpWindow help = new HelpWindow();
@@ -698,7 +770,7 @@ namespace ThesisApp.ViewModels
         //This function is used to reset all UI elements to their default states
         private void ResetUI()
         {
-            SyncBtnIsEnabled = true;
+            SyncBtnIsEnabled = ParallelBtnIsEnabled = true;
             ResetBtnIsEnabled = false;
             ImageTestTimerText = PNumTestTimerText = WebsitesTestTimerText = TotalTimeText = "00:00:00";
             ImageTestWatch.Reset();
