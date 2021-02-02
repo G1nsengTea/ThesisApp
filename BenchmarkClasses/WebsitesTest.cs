@@ -14,27 +14,19 @@ namespace ThesisApp.BenchmarkClasses
     /// </summary>
     public static class WebsitesTest
     {
-        //Execute Websites test is started in synchronous mode
+        //Execute Websites test in synchronous mode
         public static void StartSync(IProgress<WebsitesTestReportModel> progress)
         {
             //Create an instance of the report model object which will be later sent in progress report
             WebsitesTestReportModel report = new WebsitesTestReportModel();
-            List<string> websites = PrepareWebsites();            
+            List<string> websites = PrepareWebsites();
 
             foreach (string site in websites)
             {
                 //Cretae an instance of the website model which is later passed into the report
                 WebsiteDataModel result = new WebsiteDataModel();
-                try
-                {
-                    DownloadWebsite(site);
-                }
-                catch
-                {
-                    //TO DO: in case if there is no connection or request failed
-                    //implement visual indication e.g. red progress bar etc.
-                    break;
-                }
+
+                DownloadWebsite(site);
 
                 result.URI = site;
                 result.isLoaded = true;
@@ -45,9 +37,10 @@ namespace ThesisApp.BenchmarkClasses
             progress.Report(report);
         }
 
-        //Execute Websites test is started in asynchronous mode
+        //Execute Websites test in asynchronous mode
         public static async Task StartAsync(IProgress<WebsitesTestReportModel> progress, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             //Create an instance of the report model object which will be later sent in progress report
             WebsitesTestReportModel report = new WebsitesTestReportModel();
             List<string> websites = PrepareWebsites();
@@ -57,16 +50,8 @@ namespace ThesisApp.BenchmarkClasses
             {
                 //Cretae an instance of the website model which is later passed into the report
                 WebsiteDataModel result = new WebsiteDataModel();
-                try
-                {
-                    await DownloadWebsiteAsync(site);
-                }
-                catch
-                {
-                    //TO DO: in case if there is no connection or request failed
-                    //implement visual indication e.g. red progress bar etc.
-                    break;
-                }
+
+                await DownloadWebsiteAsync(site);
 
                 result.URI = site;
                 result.isLoaded = true;
@@ -78,6 +63,33 @@ namespace ThesisApp.BenchmarkClasses
 
                 cancellationToken.ThrowIfCancellationRequested();
             }
+        }
+
+        //Execute Websites test in parallel mode
+        public static void StartParallel(IProgress<WebsitesTestReportModel> progress)
+        {
+            //Create an instance of the report model object which will be later sent in progress report
+            WebsitesTestReportModel report = new WebsitesTestReportModel();
+            List<string> websites = PrepareWebsites();
+            var temp = new object();
+
+            Parallel.ForEach<string>(websites, (site, loopState) =>
+            {
+                //Cretae an instance of the website model which is later passed into the report
+                WebsiteDataModel result = new WebsiteDataModel();
+
+                DownloadWebsite(site);
+
+                result.URI = site;
+                result.isLoaded = true;
+                lock (temp)
+                {
+                    report.LoadedWebsites.Add(result);
+                }
+            });
+            //send the report to update the UI
+            report.ProgressArcAngle = 360;
+            progress.Report(report);
         }
 
         //This method is used to create a new webclient and download the website which is passed by the URL

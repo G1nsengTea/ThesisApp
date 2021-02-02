@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -28,9 +29,10 @@ namespace ThesisApp.BenchmarkClasses
             progress.Report(report);
         }
 
-        //Execute Prime Numbers test in synchronous mode
+        //Execute Prime Numbers test in asynchronous mode
         public static async Task StartAsync(IProgress<PNumTestReportModel> progress, int range, int nthPos, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             //Create an instance of the report model object which will be later sent in progress report
             PNumTestReportModel report = new PNumTestReportModel();
 
@@ -46,6 +48,25 @@ namespace ThesisApp.BenchmarkClasses
             cancellationToken.ThrowIfCancellationRequested();
             report.ProgressArcAngle = 360;
             report.NthPNumberResult = NthPosResult;
+            progress.Report(report);
+        }
+
+        //Execute Prime Numbers test in parallel mode
+        public static void StartParallel(IProgress<PNumTestReportModel> progress, int range, int nthPos)
+        {
+            //Create an instance of the report model object which will be later sent in progress report
+            PNumTestReportModel report = new PNumTestReportModel();
+            long RangeResult = 0;
+            long NthPosResult = 0;
+
+            Task RangeTask = Task.Run(() => PrimeNumbersRange(range)).ContinueWith(ant => RangeResult = ant.Result);
+            Task NthTask = Task.Run(() => NthPrimeNumber(nthPos)).ContinueWith(ant => NthPosResult = ant.Result);
+            Task.WaitAll(RangeTask, NthTask);
+
+            //Report the changes to the UI
+            report.NthPNumberResult = NthPosResult;
+            report.PNumberRangeResult = RangeResult;
+            report.ProgressArcAngle = 360;
             progress.Report(report);
         }
 
@@ -71,7 +92,6 @@ namespace ThesisApp.BenchmarkClasses
             }
             return result;
         }
-
         /// <summary>
         /// This method does the same as <see cref="PrimeNumbersRange(int)"/> but also reports progress
         /// </summary>
@@ -106,8 +126,9 @@ namespace ThesisApp.BenchmarkClasses
             }
             return result;
         }
-
         //This method is used to find the Nth prime number
+
+
         private static long NthPrimeNumber(int NthPos)
         {
             int count = 0;
@@ -132,7 +153,6 @@ namespace ThesisApp.BenchmarkClasses
             }
             return --result;
         }
-
         /// <summary>
         /// This method does the same as <see cref="NthPrimeNumber(int)"/> but also reports progress
         /// </summary>
@@ -172,6 +192,6 @@ namespace ThesisApp.BenchmarkClasses
                     break;
             }
             return --result;
-        }
+        }       
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -608,9 +609,17 @@ namespace ThesisApp.ViewModels
             PNumTestCheckmarkVisibility = Visibility.Visible;
 
             WebsitesTestWatch.Start();
-            WebsitesTest.StartSync(websitesTestProgress);
+            try
+            {
+                WebsitesTest.StartSync(websitesTestProgress);
+                WebsitesTestCheckmarkVisibility = Visibility.Visible;
+            }
+            catch (WebException)
+            {
+                WebsitesTestProgressBarColour = new SolidColorBrush(Colors.Red);
+                WebsitesTestCrossmarkVisibility = Visibility.Visible;
+            }
             WebsitesTestWatch.Stop();
-            WebsitesTestCheckmarkVisibility = Visibility.Visible;
 
             //Enable Reset button to let the user observe the results
             //and then reset UI before next run
@@ -646,11 +655,8 @@ namespace ThesisApp.ViewModels
             //Use try catch statement for cancellation Tokens
             try
             {
-                if (!cts.IsCancellationRequested)
-                {
-                    await ImageTest.StartAsync(imageTestProgress, cts.Token);
-                    ImageTestCheckmarkVisibility = Visibility.Visible;
-                }
+                await ImageTest.StartAsync(imageTestProgress, cts.Token);
+                ImageTestCheckmarkVisibility = Visibility.Visible;
             }
             catch (OperationCanceledException)
             {
@@ -663,13 +669,10 @@ namespace ThesisApp.ViewModels
             PNumTestWatch.Start();
             try
             {
-                if (!cts.IsCancellationRequested)
-                {
-                    await PrimeNumbersTest.StartAsync(pNumTestProgress, pNumRangeTest, pNumNthTest, cts.Token);
-                    PNumTestCheckmarkVisibility = Visibility.Visible;
-                }
+                await PrimeNumbersTest.StartAsync(pNumTestProgress, pNumRangeTest, pNumNthTest, cts.Token);
+                PNumTestCheckmarkVisibility = Visibility.Visible;
             }
-            catch (OperationCanceledException) 
+            catch (OperationCanceledException)
             {
                 PNumTestProgressBarColour = new SolidColorBrush(Colors.Red);
                 PNumTestCrossmarkVisibility = Visibility.Visible;
@@ -680,17 +683,17 @@ namespace ThesisApp.ViewModels
             WebsitesTestWatch.Start();
             try
             {
-                if (!cts.IsCancellationRequested)
-                {
-                    await WebsitesTest.StartAsync(websitesTestProgress, cts.Token);
-                    WebsitesTestCheckmarkVisibility = Visibility.Visible;
-                }
+                await WebsitesTest.StartAsync(websitesTestProgress, cts.Token);
+                WebsitesTestCheckmarkVisibility = Visibility.Visible;
             }
-            catch (OperationCanceledException)
+            catch (Exception ex)
             {
-                WebsitesTestProgressBarColour = new SolidColorBrush(Colors.Red);
-                WebsitesTestCrossmarkVisibility = Visibility.Visible;
-                CancelBtnTag = null;
+                if (ex is OperationCanceledException || ex is WebException)
+                {
+                    WebsitesTestProgressBarColour = new SolidColorBrush(Colors.Red);
+                    WebsitesTestCrossmarkVisibility = Visibility.Visible;
+                    CancelBtnTag = null;
+                }
             }
             WebsitesTestWatch.Stop();
 
@@ -718,36 +721,44 @@ namespace ThesisApp.ViewModels
             Progress<WebsitesTestReportModel> websitesTestProgress = new Progress<WebsitesTestReportModel>();
             websitesTestProgress.ProgressChanged += WebsitesTestProgressEvent;
 
-            
             ImageTestWatch.Start();
             PNumTestWatch.Start();
             WebsitesTestWatch.Start();
 
-            //Start executing all tasks in parallel
-            //Once a task is completed continue it and update UI parameters
+            //Functions and variables in Image test are highly dependent on each other, therefore
+            //I didn't find an efficient way to implement parallel execution for this test.
             Task ImageTestTask = Task.Run(() => ImageTest.StartSync(imageTestProgress))
-                .ContinueWith(ant =>
+                .ContinueWith(_ =>
                 {
                     ImageTestWatch.Stop();
                     ImageTestCheckmarkVisibility = Visibility.Visible;
                 });
 
-            Task PNumTestTask = Task.Run(() => PrimeNumbersTest.StartSync(pNumTestProgress, pNumRangeTest, pNumNthTest))
-                .ContinueWith(ant =>
+            Task PNumTestTask = Task.Run(() => PrimeNumbersTest.StartParallel(pNumTestProgress, pNumRangeTest, pNumNthTest))
+                .ContinueWith(_ =>
                 {
                     PNumTestWatch.Stop();
                     PNumTestCheckmarkVisibility = Visibility.Visible;
                 });
-            Task WebsitesTestTask = Task.Run(() => WebsitesTest.StartSync(websitesTestProgress))
-                .ContinueWith(ant =>
+
+            Task WebsitesTestTask = new Task(() => WebsitesTest.StartParallel(websitesTestProgress))
+                .ContinueWith(_ =>
                 {
                     WebsitesTestWatch.Stop();
                     WebsitesTestCheckmarkVisibility = Visibility.Visible;
                 });
+            try
+            {
+                WebsitesTestTask.Start();
+            }
+            catch (WebException)
+            {
+                WebsitesTestProgressBarColour = new SolidColorBrush(Colors.Red);
+                WebsitesTestCrossmarkVisibility = Visibility.Visible;
+            }
 
-            //Wait untill all tasks are finished. UI thread is blocked.
+            //Wait until all tasks are finished. UI thread is blocked.
             Task.WaitAll(ImageTestTask, PNumTestTask, WebsitesTestTask);
-
 
             //Enable Reset button to let the user observe the results
             //and then reset UI before next run
