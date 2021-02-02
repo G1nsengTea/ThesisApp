@@ -135,8 +135,9 @@
                                 Style="{StaticResource btnStyle}"/>
 
                         <Button Content="Parallel Execution"
-                            Style="{StaticResource btnStyle}"
-                            IsEnabled="{Binding ParallelBtnIsEnabled}"/>
+                                Style="{StaticResource btnStyle}"
+                                Command="{Binding ParallelTestCommand}"
+                                IsEnabled="{Binding ParallelBtnIsEnabled}"/>
 
                         <Button x:Name="ParallelAsyncBtn" Content="Parallel + Async Execution"
                             Style="{StaticResource btnStyle}"

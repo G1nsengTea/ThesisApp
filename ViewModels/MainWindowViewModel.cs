@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -74,7 +75,7 @@ namespace ThesisApp.ViewModels
         private string _cancelBtnTag;
         private bool _syncBtnIsEnabled = true;
         private bool _asyncBtnIsEnabled = true;
-        private bool _parallelBtnIsEnabled = false;
+        private bool _parallelBtnIsEnabled = true;
         private bool _parallelAsyncBtnIsEnabled;
         private bool _resetBtnIsEnabled = false;
         private bool _cancelBthIsEnabled = false;
@@ -442,6 +443,7 @@ namespace ThesisApp.ViewModels
         private ICommand _helpCommand;
         private ICommand _exitCommand;
         private ICommand _cancelCommand;
+        private ICommand _parallelTestCommand;
         #endregion
 
         #region Public Part
@@ -471,6 +473,20 @@ namespace ThesisApp.ViewModels
                         );
                 }
                 return _asyncTestCommand;
+            }
+        }
+        public ICommand ParallelTestCommand
+        {
+            get
+            {
+                if (_parallelTestCommand == null)
+                {
+                    _parallelTestCommand = new RelayCommand(
+                        obj => ParallelTest(),
+                        obj => CanParallelTest()
+                        );
+                }
+                return _parallelTestCommand;
             }
         }
         public ICommand ResetCommand
@@ -558,6 +574,10 @@ namespace ThesisApp.ViewModels
         {
             return CancelBtnIsEnabled;
         }
+        private bool CanParallelTest()
+        {
+            return ParallelBtnIsEnabled;
+        }
         #endregion
 
         /// <summary>
@@ -589,13 +609,21 @@ namespace ThesisApp.ViewModels
             PNumTestCheckmarkVisibility = Visibility.Visible;
 
             WebsitesTestWatch.Start();
-            WebsitesTest.StartSync(websitesTestProgress);
+            try
+            {
+                WebsitesTest.StartSync(websitesTestProgress);
+                WebsitesTestCheckmarkVisibility = Visibility.Visible;
+            }
+            catch (WebException)
+            {
+                WebsitesTestProgressBarColour = new SolidColorBrush(Colors.Red);
+                WebsitesTestCrossmarkVisibility = Visibility.Visible;
+            }
             WebsitesTestWatch.Stop();
-            WebsitesTestCheckmarkVisibility = Visibility.Visible;
 
             //Enable Reset button to let the user observe the results
             //and then reset UI before next run
-            SyncBtnIsEnabled = false;
+            SyncBtnIsEnabled = ParallelBtnIsEnabled = false;
             ResetBtnIsEnabled = true;
 
             //Stop Total timer and update all timers
@@ -627,11 +655,8 @@ namespace ThesisApp.ViewModels
             //Use try catch statement for cancellation Tokens
             try
             {
-                if (!cts.IsCancellationRequested)
-                {
-                    await ImageTest.StartAsync(imageTestProgress, cts.Token);
-                    ImageTestCheckmarkVisibility = Visibility.Visible;
-                }
+                await ImageTest.StartAsync(imageTestProgress, cts.Token);
+                ImageTestCheckmarkVisibility = Visibility.Visible;
             }
             catch (OperationCanceledException)
             {
@@ -644,13 +669,10 @@ namespace ThesisApp.ViewModels
             PNumTestWatch.Start();
             try
             {
-                if (!cts.IsCancellationRequested)
-                {
-                    await PrimeNumbersTest.StartAsync(pNumTestProgress, pNumRangeTest, pNumNthTest, cts.Token);
-                    PNumTestCheckmarkVisibility = Visibility.Visible;
-                }
+                await PrimeNumbersTest.StartAsync(pNumTestProgress, pNumRangeTest, pNumNthTest, cts.Token);
+                PNumTestCheckmarkVisibility = Visibility.Visible;
             }
-            catch (OperationCanceledException) 
+            catch (OperationCanceledException)
             {
                 PNumTestProgressBarColour = new SolidColorBrush(Colors.Red);
                 PNumTestCrossmarkVisibility = Visibility.Visible;
@@ -661,17 +683,17 @@ namespace ThesisApp.ViewModels
             WebsitesTestWatch.Start();
             try
             {
-                if (!cts.IsCancellationRequested)
-                {
-                    await WebsitesTest.StartAsync(websitesTestProgress, cts.Token);
-                    WebsitesTestCheckmarkVisibility = Visibility.Visible;
-                }
+                await WebsitesTest.StartAsync(websitesTestProgress, cts.Token);
+                WebsitesTestCheckmarkVisibility = Visibility.Visible;
             }
-            catch (OperationCanceledException)
+            catch (Exception ex)
             {
-                WebsitesTestProgressBarColour = new SolidColorBrush(Colors.Red);
-                WebsitesTestCrossmarkVisibility = Visibility.Visible;
-                CancelBtnTag = null;
+                if (ex is OperationCanceledException || ex is WebException)
+                {
+                    WebsitesTestProgressBarColour = new SolidColorBrush(Colors.Red);
+                    WebsitesTestCrossmarkVisibility = Visibility.Visible;
+                    CancelBtnTag = null;
+                }
             }
             WebsitesTestWatch.Stop();
 
@@ -686,6 +708,67 @@ namespace ThesisApp.ViewModels
             TotalTimeWatch.Stop();
             DTime.Stop();
         }
+        private void ParallelTest()
+        {
+            TotalTimeWatch.Start();
+
+            //Initialize instances of Progress class that are later used to trigger
+            //the events that update UI
+            Progress<ImageTestReportModel> imageTestProgress = new Progress<ImageTestReportModel>();
+            imageTestProgress.ProgressChanged += ImageTestProgressEvent;
+            Progress<PNumTestReportModel> pNumTestProgress = new Progress<PNumTestReportModel>();
+            pNumTestProgress.ProgressChanged += PNumTestProgressEvent;
+            Progress<WebsitesTestReportModel> websitesTestProgress = new Progress<WebsitesTestReportModel>();
+            websitesTestProgress.ProgressChanged += WebsitesTestProgressEvent;
+
+            ImageTestWatch.Start();
+            PNumTestWatch.Start();
+            WebsitesTestWatch.Start();
+
+            //Functions and variables in Image test are highly dependent on each other, therefore
+            //I didn't find an efficient way to implement parallel execution for this test.
+            Task ImageTestTask = Task.Run(() => ImageTest.StartSync(imageTestProgress))
+                .ContinueWith(_ =>
+                {
+                    ImageTestWatch.Stop();
+                    ImageTestCheckmarkVisibility = Visibility.Visible;
+                });
+
+            Task PNumTestTask = Task.Run(() => PrimeNumbersTest.StartParallel(pNumTestProgress, pNumRangeTest, pNumNthTest))
+                .ContinueWith(_ =>
+                {
+                    PNumTestWatch.Stop();
+                    PNumTestCheckmarkVisibility = Visibility.Visible;
+                });
+
+            Task WebsitesTestTask = new Task(() => WebsitesTest.StartParallel(websitesTestProgress))
+                .ContinueWith(_ =>
+                {
+                    WebsitesTestWatch.Stop();
+                    WebsitesTestCheckmarkVisibility = Visibility.Visible;
+                });
+            try
+            {
+                WebsitesTestTask.Start();
+            }
+            catch (WebException)
+            {
+                WebsitesTestProgressBarColour = new SolidColorBrush(Colors.Red);
+                WebsitesTestCrossmarkVisibility = Visibility.Visible;
+            }
+
+            //Wait until all tasks are finished. UI thread is blocked.
+            Task.WaitAll(ImageTestTask, PNumTestTask, WebsitesTestTask);
+
+            //Enable Reset button to let the user observe the results
+            //and then reset UI before next run
+            SyncBtnIsEnabled = ParallelBtnIsEnabled = false;
+            ResetBtnIsEnabled = true;
+
+            //Stop Total timer and update all timers
+            TotalTimeWatch.Stop();
+            UpdateTimers(this, new EventArgs());
+        }
         private void Help()
         {
             HelpWindow help = new HelpWindow();
@@ -698,7 +781,7 @@ namespace ThesisApp.ViewModels
         //This function is used to reset all UI elements to their default states
         private void ResetUI()
         {
-            SyncBtnIsEnabled = true;
+            SyncBtnIsEnabled = ParallelBtnIsEnabled = true;
             ResetBtnIsEnabled = false;
             ImageTestTimerText = PNumTestTimerText = WebsitesTestTimerText = TotalTimeText = "00:00:00";
             ImageTestWatch.Reset();

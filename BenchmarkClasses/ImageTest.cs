@@ -7,6 +7,7 @@ using System.Windows.Media.Imaging;
 using System.Drawing;
 using System.IO;
 using ThesisApp.Models;
+using System.Collections.Concurrent;
 
 namespace ThesisApp.BenchmarkClasses
 {
@@ -26,7 +27,7 @@ namespace ThesisApp.BenchmarkClasses
         //Set how frequently the report is sent to the UI
         private static readonly int ProgressReportFrequency = 20;
 
-        //This method is invoked once the Image test is started
+        //Execute Image test in synchronous mode. The same method is called for parallel mode.
         public static void StartSync(IProgress<ImageTestReportModel> progress)
         {
             //Create an instance of the report model object which will be later sent in progress report
@@ -39,14 +40,15 @@ namespace ThesisApp.BenchmarkClasses
                 ResultImg.SetPixel(ColorCoordinates[i][0], ColorCoordinates[i][1], ColorizedImage.GetPixel(ColorCoordinates[i][0], ColorCoordinates[i][1]));
             }
 
-            //Report the changes to the UI
+            //Report the progress to update the UI
             report.ReportImage = ToWpfBitmap(ResultImg);
             report.ProgressArcAngle = 360;
             progress.Report(report);
         }
-
+        //Execute Image test in asynchronous mode
         public static async Task StartAsync(IProgress<ImageTestReportModel> progress, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             //Create an instance of the report model object which will be later sent in progress report
             ImageTestReportModel report = new ImageTestReportModel();
             ResultImg = new Bitmap(Properties.Resources.TestImageBW);
@@ -61,6 +63,7 @@ namespace ThesisApp.BenchmarkClasses
                 {
                     ResultImg.SetPixel(ColorCoordinates[i][0], ColorCoordinates[i][1], ColorizedImage.GetPixel(ColorCoordinates[i][0], ColorCoordinates[i][1]));
 
+                    //Send the report to the UI thread to update progress bar
                     if (i % (ColorCoordinates.Length / ProgressReportFrequency ) == 0 && i > 0 || i == ColorCoordinates.Length - 1)
                     {
                         reportIndex++;
@@ -75,7 +78,8 @@ namespace ThesisApp.BenchmarkClasses
             });
             cancellationToken.ThrowIfCancellationRequested();
         }
-
+        
+        
         //This function is used to populate and shuffle to coordinates array
         private static void SetCooridnates()
         {
