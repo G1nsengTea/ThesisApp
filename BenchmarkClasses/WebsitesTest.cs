@@ -57,7 +57,7 @@ namespace ThesisApp.BenchmarkClasses
                 result.isLoaded = true;
                 report.LoadedWebsites.Add(result);
                 loadedWebsitesCount++;
-                //Multiply by 360 because of arc shape of progress par
+                //Multiply by 360 because of arc shape of progress bar
                 report.ProgressArcAngle = (loadedWebsitesCount * 360) / websites.Count;
                 progress.Report(report);
 
@@ -73,7 +73,7 @@ namespace ThesisApp.BenchmarkClasses
             List<string> websites = PrepareWebsites();
             var temp = new object();
 
-            Parallel.ForEach<string>(websites, (site, loopState) =>
+            Parallel.ForEach<string>(websites, (site) =>
             {
                 //Cretae an instance of the website model which is later passed into the report
                 WebsiteDataModel result = new WebsiteDataModel();
@@ -91,6 +91,51 @@ namespace ThesisApp.BenchmarkClasses
             report.ProgressArcAngle = 360;
             progress.Report(report);
         }
+
+        //Execute Websites test in parallel async mode
+        public static async Task StartParallelAsync(IProgress<WebsitesTestReportModel> progress, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            //Create an instance of the report model object which will be later sent in progress report
+            WebsitesTestReportModel report = new WebsitesTestReportModel();
+            List<string> websites = PrepareWebsites();
+            var temp = new object();
+            int loadedWebsitesCount = 0;
+
+            await Task.Run(() =>
+            {
+                Parallel.ForEach<string>(websites, (site, loopState) =>
+                {
+                    //Cretae an instance of the website model which is later passed into the report
+                    WebsiteDataModel result = new WebsiteDataModel();
+
+                    DownloadWebsite(site);
+
+                    result.URI = site;
+                    result.isLoaded = true;
+
+                    if (cancellationToken.IsCancellationRequested)
+                        loopState.Stop();
+
+                    lock (temp)
+                    {
+                        //Send the progress report only if other iterations did not stop the loop
+                        if (!loopState.IsStopped)
+                        {
+                            report.LoadedWebsites.Add(result);
+                            loadedWebsitesCount++;
+                            //Multiply by 360 because of arc shape of progress bar
+                            report.ProgressArcAngle = (loadedWebsitesCount * 360) / websites.Count;
+
+                            progress.Report(report);
+                        }
+                    }
+                });
+            });
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        
 
         //This method is used to create a new webclient and download the website which is passed by the URL
         private static void DownloadWebsite(string URL)

@@ -161,7 +161,6 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <None Include="ThesisApp_TemporaryKey.pfx" />
     <Resource Include="Resources\Fonts\digital-7.ttf" />
   </ItemGroup>
   <ItemGroup>
