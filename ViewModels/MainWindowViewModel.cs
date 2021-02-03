@@ -30,8 +30,8 @@ namespace ThesisApp.ViewModels
         /// </summary>
         #region Fields
         public event PropertyChangedEventHandler PropertyChanged;
-        private static readonly int pNumRangeTest = 400000;
-        private static readonly int pNumNthTest = 400000;
+        private static readonly int pNumRangeTest = 3000000;
+        private static readonly int pNumNthTest = 200000;
         private readonly Stopwatch ImageTestWatch = new Stopwatch();
         private readonly Stopwatch PNumTestWatch = new Stopwatch();
         private readonly Stopwatch WebsitesTestWatch = new Stopwatch();
@@ -605,7 +605,7 @@ namespace ThesisApp.ViewModels
 
             PNumTestWatch.Start();
             PrimeNumbersTest.StartSync(pNumTestProgress, pNumRangeTest, pNumNthTest);
-            PNumTestWatch.Start();
+            PNumTestWatch.Stop();
             PNumTestCheckmarkVisibility = Visibility.Visible;
 
             WebsitesTestWatch.Start();
@@ -741,21 +741,24 @@ namespace ThesisApp.ViewModels
                     PNumTestCheckmarkVisibility = Visibility.Visible;
                 });
 
-            Task WebsitesTestTask = new Task(() => WebsitesTest.StartParallel(websitesTestProgress))
-                .ContinueWith(_ =>
+            Task WebsitesTestTask = Task.Run(() =>
+            {
+                try
                 {
-                    WebsitesTestWatch.Stop();
-                    WebsitesTestCheckmarkVisibility = Visibility.Visible;
-                });
-            try
+                    WebsitesTest.StartParallel(websitesTestProgress);
+                }
+
+                catch (WebException)
+                {
+                    WebsitesTestProgressBarColour = new SolidColorBrush(Colors.Red);
+                    WebsitesTestCrossmarkVisibility = Visibility.Visible;
+                }
+            })
+            .ContinueWith(_ =>
             {
-                WebsitesTestTask.Start();
-            }
-            catch (WebException)
-            {
-                WebsitesTestProgressBarColour = new SolidColorBrush(Colors.Red);
-                WebsitesTestCrossmarkVisibility = Visibility.Visible;
-            }
+                WebsitesTestWatch.Stop();
+                WebsitesTestCheckmarkVisibility = Visibility.Visible;
+            });
 
             //Wait until all tasks are finished. UI thread is blocked.
             Task.WaitAll(ImageTestTask, PNumTestTask, WebsitesTestTask);
