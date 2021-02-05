@@ -1,13 +1,13 @@
-﻿<Window x:Class="ThesisApp.MainWindow"
+﻿<Window x:Class="ThesisApp.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:ThesisApp"
+        xmlns:local="clr-namespace:ThesisApp.Views"
         xmlns:ed="http://schemas.microsoft.com/expression/2010/drawing"
         mc:Ignorable="d" FontSize="17" FontFamily="Segoe UI Semilight"
         MinHeight="700" MinWidth="1000"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen" Height="726.4">
 
     <Window.Resources>
         
@@ -237,6 +237,10 @@
                                FontFamily="pack://application:,,,/Resources/Fonts/#Digital-7"
                                Foreground="White"
                                HorizontalAlignment="Center"/>
+
+                    <Button Content="Display Results"
+                                Style="{StaticResource btnStyle}"
+                                Command="{Binding DisplayResultsCommand}"/>
                     <!--#endregion-->
 
                 </StackPanel>

@@ -1,0 +1,132 @@
+﻿<Window x:Class="ThesisApp.Views.ResultsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:Themes="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero"
+        xmlns:local="clr-namespace:ThesisApp.Views"
+        mc:Ignorable="d" FontSize="17" FontFamily="Segoe UI Semilight"
+        MinHeight="500" MinWidth="700"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Total Results"
+                   HorizontalAlignment="Center"
+                   FontSize="30"
+                   Grid.Row="0"
+                   Margin="5"/>
+
+        <DataGrid ItemsSource="{Binding Path=Results}"
+                  AutoGenerateColumns="False"
+                  Grid.Row="1"
+                  HorizontalContentAlignment="Center"
+                  CanUserAddRows="False" CanUserDeleteRows="False"
+                  IsReadOnly="True"
+                  AlternatingRowBackground="LightGray">
+
+            <DataGrid.Resources>
+
+                <!--It is necessary to completely reimplement the default DataGridColumnHeader template
+                in order to change header background and keep the sorting arrow-->
+                <!--#region Colomn Header Template-->
+                <Style x:Key="ColumnHeaderGripperStyle" TargetType="{x:Type Thumb}">
+                    <Setter Property="Width" Value="8"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Cursor" Value="SizeWE"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type Thumb}">
+                                <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}"/>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+                <Style TargetType="{x:Type DataGridColumnHeader}">
+                    <Setter Property="Background" Value="#00a2ed"/>
+                    <Setter Property="BorderThickness" Value="1"/>
+                    <Setter Property="BorderBrush" Value="Black"/>
+                    <Setter Property="Padding" Value="2"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type DataGridColumnHeader}">
+                                <Grid>
+                                    <Themes:DataGridHeaderBorder BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" IsClickable="{TemplateBinding CanUserSort}" IsPressed="{TemplateBinding IsPressed}" IsHovered="{TemplateBinding IsMouseOver}" Padding="{TemplateBinding Padding}" SortDirection="{TemplateBinding SortDirection}" SeparatorBrush="{TemplateBinding SeparatorBrush}" SeparatorVisibility="{TemplateBinding SeparatorVisibility}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <ContentPresenter Grid.Column="0" HorizontalAlignment="Center" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                                            <Path x:Name="SortArrow"
+                                            Grid.Column="1"
+                                            HorizontalAlignment="Right" VerticalAlignment="Center"                                           
+                                            Width="8" Height="6" Margin="2,0,5,0"
+                                            Stretch="Fill" Opacity="0.5" Fill="Black"
+                                            RenderTransformOrigin="0.5,0.4"
+                                            Visibility="Collapsed"
+                                            Data="M0,0 L1,0 0.5,1 z" />
+                                        </Grid>
+                                    </Themes:DataGridHeaderBorder>
+                                    <Thumb x:Name="PART_LeftHeaderGripper" HorizontalAlignment="Left" Style="{StaticResource ColumnHeaderGripperStyle}"/>
+                                    <Thumb x:Name="PART_RightHeaderGripper" HorizontalAlignment="Right" Style="{StaticResource ColumnHeaderGripperStyle}"/>
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="SortDirection" Value="Ascending">
+                                        <Setter TargetName="SortArrow" Property="Visibility" Value="Visible" />
+                                        <Setter TargetName="SortArrow" Property="RenderTransform">
+                                            <Setter.Value>
+                                                <RotateTransform Angle="180" />
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Trigger>
+                                    <Trigger Property="SortDirection" Value="Descending">
+                                        <Setter TargetName="SortArrow" Property="Visibility" Value="Visible" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#87d9ff"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+                <!--#endregion-->
+
+                <Style TargetType="DataGridCell">
+                    <Setter Property="TextBlock.TextAlignment" Value="Center"/>
+                </Style>
+            </DataGrid.Resources>
+
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Execution Type" Binding="{Binding ExecutionType}" Width="*"/>
+                <DataGridTextColumn Header="Image Test" Binding="{Binding ImageTestTime}" Width="*"/>
+                <DataGridTextColumn Header="Prime Numbers Test" Binding="{Binding PNumTestTime}" Width="*"/>
+                <DataGridTextColumn Header="Websites Test" Binding="{Binding WebsitesTestTime}" Width="*"/>
+                <DataGridTextColumn Header="Total Time" Binding="{Binding TotalTime}" Width="*"/>
+                <DataGridTextColumn Header="Status" Binding="{Binding CompletitionStatus}" Width="*">
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="TextBlock.TextAlignment" Value="Center"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=CompletitionStatus}" Value="Cancelled">
+                                    <Setter Property="Background" Value="Red"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Path=CompletitionStatus}" Value="Completed">
+                                    <Setter Property="Background" Value="LightGreen"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</Window>

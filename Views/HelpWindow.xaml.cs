@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace ThesisApp
+namespace ThesisApp.Views
 {
     public partial class HelpWindow : Window
     {

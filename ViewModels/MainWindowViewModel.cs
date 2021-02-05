@@ -16,6 +16,7 @@ using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using ThesisApp.BenchmarkClasses;
 using ThesisApp.Models;
+using ThesisApp.Views;
 
 namespace ThesisApp.ViewModels
 {
@@ -453,6 +454,7 @@ namespace ThesisApp.ViewModels
         private ICommand _cancelCommand;
         private ICommand _parallelTestCommand;
         private ICommand _parallelAsyncTestCommand;
+        private ICommand _displayResultsCommand;
         #endregion
 
         #region Public Part
@@ -512,7 +514,6 @@ namespace ThesisApp.ViewModels
                 return _parallelAsyncTestCommand;
             }
         }
-
         public ICommand ResetCommand
         {
             get
@@ -567,6 +568,20 @@ namespace ThesisApp.ViewModels
                         );
                 }
                 return _cancelCommand;
+            }
+        }
+        public ICommand DisplayResultsCommand
+        {
+            get
+            {
+                if (_displayResultsCommand == null)
+                {
+                    _displayResultsCommand = new RelayCommand(
+                        obj => DisplayResults(),
+                        obj => { return true; }
+                        );
+                }
+                return _displayResultsCommand;
             }
         }
         #endregion
@@ -657,6 +672,9 @@ namespace ThesisApp.ViewModels
             //Stop Total timer and update all timers
             TotalTimeWatch.Stop();
             UpdateTimers(this, new EventArgs());
+
+            //Push the results of execution to the results manager
+            ResultsDataManager.SetResults("Synchronous", ImageTestTimerText, PNumTestTimerText, WebsitesTestTimerText, TotalTimeText, true);
         }
         private async void AsyncTest()
         {
@@ -735,6 +753,9 @@ namespace ThesisApp.ViewModels
 
             TotalTimeWatch.Stop();
             DTime.Stop();
+
+            //Push the results of execution to the results manager
+            ResultsDataManager.SetResults("Asynchronous", ImageTestTimerText, PNumTestTimerText, WebsitesTestTimerText, TotalTimeText, !cts.IsCancellationRequested);
         }
         private void ParallelTest()
         {
@@ -795,6 +816,9 @@ namespace ThesisApp.ViewModels
             //Stop Total timer and update all timers
             TotalTimeWatch.Stop();
             UpdateTimers(this, new EventArgs());
+
+            //Push the results of execution to the results manager
+            ResultsDataManager.SetResults("Parallel", ImageTestTimerText, PNumTestTimerText, WebsitesTestTimerText, TotalTimeText, true);
         }
         private async void ParallelAsyncTest()
         {
@@ -894,11 +918,19 @@ namespace ThesisApp.ViewModels
 
             TotalTimeWatch.Stop();
             DTime.Stop();
+
+            //Push the results of execution to the results manager
+            ResultsDataManager.SetResults("Parallel + Async", ImageTestTimerText, PNumTestTimerText, WebsitesTestTimerText, TotalTimeText, !cts.IsCancellationRequested);
         }
         private void Help()
         {
             HelpWindow help = new HelpWindow();
             help.Show();
+        }
+        private void DisplayResults()
+        {
+            ResultsWindow results = new ResultsWindow();
+            results.Show();
         }
         private void Exit()
         {
@@ -983,6 +1015,7 @@ namespace ThesisApp.ViewModels
         private void WebsitesTestProgressEvent(object sender, WebsitesTestReportModel e)
         {            
             WebsitesTestArcAngle = e.ProgressArcAngle;
+            //Convert LoadedWebsites to a new list to prevent "Collection was modified" error
             foreach (var site in e.LoadedWebsites.ToList())
             {
                 if (site.URI.Contains("google") && site.isLoaded)
