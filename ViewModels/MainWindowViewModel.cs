@@ -817,26 +817,27 @@ namespace ThesisApp.ViewModels
             websitesTestProgress.ProgressChanged += WebsitesTestProgressEvent;
 
 
-            //Task ImageTestTask = Task.Run(async () =>
-            //{
-            //    try
-            //    {
-            //        ImageTestWatch.Start();
-            //        await ImageTest.StartAsync(imageTestProgress, cts.Token);
-            //        ImageTestCheckmarkVisibility = Visibility.Visible;
-            //        ImageTestWatch.Stop();
-            //    }
-            //    catch (OperationCanceledException)
-            //    {
-            //        //Call dispatcher to update UI from worker thread
-            //        Application.Current.Dispatcher.Invoke(() =>
-            //        {
-            //            ImageTestProgressBarColour = new SolidColorBrush(Colors.Red);
-            //            ImageTestCrossmarkVisibility = Visibility.Visible;
-            //            CancelBtnTag = null;
-            //        });
-            //    }
-            //});
+            //Start executing all 3 tests asynchronously and in parallel
+            Task ImageTestTask = Task.Run(async () =>
+            {
+                try
+                {
+                    ImageTestWatch.Start();
+                    await ImageTest.StartAsync(imageTestProgress, cts.Token);
+                    ImageTestCheckmarkVisibility = Visibility.Visible;
+                    ImageTestWatch.Stop();
+                }
+                catch (OperationCanceledException)
+                {
+                    //Call dispatcher to update UI from worker thread
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        ImageTestProgressBarColour = new SolidColorBrush(Colors.Red);
+                        ImageTestCrossmarkVisibility = Visibility.Visible;
+                        CancelBtnTag = null;
+                    });
+                }
+            });
 
             Task NthNumberTestTask = Task.Run(async () =>
             {
@@ -881,7 +882,7 @@ namespace ThesisApp.ViewModels
                 }
             });
 
-            await Task.WhenAll(NthNumberTestTask, WebsitesTestTask);
+            await Task.WhenAll(ImageTestTask, NthNumberTestTask, WebsitesTestTask);
 
             //enable UI elements
             AsyncBtnIsEnabled = ParallelAsyncBtnIsEnabled = ResetBtnIsEnabled = true;

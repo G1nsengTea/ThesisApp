@@ -84,8 +84,7 @@ namespace ThesisApp.BenchmarkClasses
                 }
             });
             cancellationToken.ThrowIfCancellationRequested();
-        }
-        
+        }        
         
         //This function is used to populate and shuffle to coordinates array
         private static void SetCooridnates()
