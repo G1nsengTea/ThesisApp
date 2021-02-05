@@ -134,14 +134,16 @@
                                 Tag="{Binding AsyncBtnTag}"
                                 Style="{StaticResource btnStyle}"/>
 
-                        <Button Content="Parallel Execution"
-                                Style="{StaticResource btnStyle}"
-                                Command="{Binding ParallelTestCommand}"
-                                IsEnabled="{Binding ParallelBtnIsEnabled}"/>
+                        <Button Content="Parallel Execution"                                
+                                Command="{Binding ParallelTestCommand}"                                
+                                IsEnabled="{Binding ParallelBtnIsEnabled}"
+                                Style="{StaticResource btnStyle}"/>
 
-                        <Button x:Name="ParallelAsyncBtn" Content="Parallel + Async Execution"
-                            Style="{StaticResource btnStyle}"
-                            IsEnabled="False"/>
+                        <Button Content="Parallel + Async Execution"
+                                Command="{Binding ParallelAsyncTestCommand}"
+                                IsEnabled="{Binding ParallelAsyncBtnIsEnabled}"
+                                Tag="{Binding ParallelAsyncBtnTag}"
+                                Style="{StaticResource btnStyle}"/>
 
                     </StackPanel>
                     <!--#endregion-->

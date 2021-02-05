@@ -54,6 +54,11 @@ namespace ThesisApp.BenchmarkClasses
             ResultImg = new Bitmap(Properties.Resources.TestImageBW);
             int reportIndex = 0;
 
+            //Send initial progress report
+            reportIndex++;
+            report.ProgressArcAngle = (reportIndex * 360) / ProgressReportFrequency;
+            progress.Report(report);
+
             await Task.Run(() => SetCooridnates());
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -68,7 +73,9 @@ namespace ThesisApp.BenchmarkClasses
                     {
                         reportIndex++;
                         report.ReportImage = ToWpfBitmap(ResultImg);
-                        report.ProgressArcAngle = (reportIndex * 360) / ProgressReportFrequency;
+                        //Adjust the value of progress bar angle (multiply by 343 instead of 360)
+                        //because the first report was already sent earlier
+                        report.ProgressArcAngle = (reportIndex * 343) / ProgressReportFrequency;
                         progress.Report(report);
                     }
 
@@ -77,8 +84,7 @@ namespace ThesisApp.BenchmarkClasses
                 }
             });
             cancellationToken.ThrowIfCancellationRequested();
-        }
-        
+        }        
         
         //This function is used to populate and shuffle to coordinates array
         private static void SetCooridnates()
