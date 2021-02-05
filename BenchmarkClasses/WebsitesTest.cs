@@ -82,11 +82,14 @@ namespace ThesisApp.BenchmarkClasses
 
                 result.URI = site;
                 result.isLoaded = true;
+
+                //lock around access to shared object for thread safity
                 lock (temp)
                 {
                     report.LoadedWebsites.Add(result);
                 }
             });
+
             //send the report to update the UI
             report.ProgressArcAngle = 360;
             progress.Report(report);
@@ -117,6 +120,7 @@ namespace ThesisApp.BenchmarkClasses
                     if (cancellationToken.IsCancellationRequested)
                         loopState.Stop();
 
+                    //lock around access to shared objects for thread safity
                     lock (temp)
                     {
                         //Send the progress report only if other iterations did not stop the loop

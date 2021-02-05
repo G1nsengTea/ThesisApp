@@ -838,27 +838,26 @@ namespace ThesisApp.ViewModels
             //    }
             //});
 
-            //Task NthNumberTestTask = Task.Run(async () =>
-            //{
-            //    try
-            //    {
-            //        PNumTestWatch.Start();
-            //        await PrimeNumbersTest.StartAsync(pNumTestProgress, pNumRangeTest, pNumNthTest, cts.Token);
-            //        PNumTestWatch.Stop();
-            //        PNumTestCheckmarkVisibility = Visibility.Visible;
-            //    }
-            //    catch (OperationCanceledException)
-            //    {
-            //        Application.Current.Dispatcher.Invoke(() =>
-            //        {
-            //            PNumTestProgressBarColour = new SolidColorBrush(Colors.Red);
-            //            PNumTestCrossmarkVisibility = Visibility.Visible;
-            //            CancelBtnTag = null;
-            //        });
-            //    }
-            //});           
+            Task NthNumberTestTask = Task.Run(async () =>
+            {
+                try
+                {
+                    PNumTestWatch.Start();
+                    await PrimeNumbersTest.StartParallelAsync(pNumTestProgress, pNumRangeTest, pNumNthTest, cts.Token);
+                    PNumTestWatch.Stop();
+                    PNumTestCheckmarkVisibility = Visibility.Visible;
+                }
+                catch (OperationCanceledException)
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        PNumTestProgressBarColour = new SolidColorBrush(Colors.Red);
+                        PNumTestCrossmarkVisibility = Visibility.Visible;
+                        CancelBtnTag = null;
+                    });
+                }
+            });
 
-            
             Task WebsitesTestTask = Task.Run(async () =>
             {
                 try
@@ -882,7 +881,7 @@ namespace ThesisApp.ViewModels
                 }
             });
 
-            await Task.WhenAll(WebsitesTestTask);
+            await Task.WhenAll(NthNumberTestTask, WebsitesTestTask);
 
             //enable UI elements
             AsyncBtnIsEnabled = ParallelAsyncBtnIsEnabled = ResetBtnIsEnabled = true;

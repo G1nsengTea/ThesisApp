@@ -36,18 +36,19 @@ namespace ThesisApp.BenchmarkClasses
             //Create an instance of the report model object which will be later sent in progress report
             PNumTestReportModel report = new PNumTestReportModel();
 
-            Task<long> rangeTask = Task.Run(() => {return PrimeNumbersRangeAsync(range, ref progress, ref report, ref cancellationToken); });
-            long RangeResult = await rangeTask;
+            await Task.Run(() => {return PrimeNumbersRangeAsync(range, ref progress, ref report, ref cancellationToken); })
+                .ContinueWith(ant=> { report.PNumberRangeResult = ant.Result; });
+
             cancellationToken.ThrowIfCancellationRequested();
-            report.PNumberRangeResult = RangeResult;
             report.ProgressArcAngle = 180;
             progress.Report(report);
 
-            Task<long> nthTask = Task.Run(() => { return NthPrimeNumberAsync(nthPos, ref progress, ref report, ref cancellationToken); });
-            long NthPosResult = await nthTask;
+
+            await Task.Run(() => { return NthPrimeNumberAsync(nthPos, ref progress, ref report, ref cancellationToken); })
+                .ContinueWith(ant => { report.NthPNumberResult = ant.Result; });
+
             cancellationToken.ThrowIfCancellationRequested();
             report.ProgressArcAngle = 360;
-            report.NthPNumberResult = NthPosResult;
             progress.Report(report);
         }
 
@@ -56,16 +57,34 @@ namespace ThesisApp.BenchmarkClasses
         {
             //Create an instance of the report model object which will be later sent in progress report
             PNumTestReportModel report = new PNumTestReportModel();
-            long RangeResult = 0;
-            long NthPosResult = 0;
 
-            Task RangeTask = Task.Run(() => PrimeNumbersRange(range)).ContinueWith(ant => RangeResult = ant.Result);
-            Task NthTask = Task.Run(() => NthPrimeNumber(nthPos)).ContinueWith(ant => NthPosResult = ant.Result);
+            Task RangeTask = Task.Run(() => PrimeNumbersRange(range)).ContinueWith(ant => report.PNumberRangeResult = ant.Result);
+            Task NthTask = Task.Run(() => NthPrimeNumber(nthPos)).ContinueWith(ant => report.NthPNumberResult = ant.Result);
             Task.WaitAll(RangeTask, NthTask);
 
             //Report the changes to the UI
-            report.NthPNumberResult = NthPosResult;
-            report.PNumberRangeResult = RangeResult;
+            report.ProgressArcAngle = 360;
+            progress.Report(report);
+        }
+
+        //Execute Prime Numbers test in parallel async mode
+        public static async Task StartParallelAsync(IProgress<PNumTestReportModel> progress, int range, int nthPos, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            //Create an instance of the report model object which will be later sent in progress report
+            PNumTestReportModel report = new PNumTestReportModel();
+
+            //Start both tasks at the same time
+            Task rangeTask = Task.Run(() => { return PrimeNumbersRangeAsync(range, ref progress, ref report, ref cancellationToken); })
+                .ContinueWith(ant=> { report.PNumberRangeResult = ant.Result; });
+            
+            Task nthTask = Task.Run(() => { return NthPrimeNumberAsync(nthPos, ref progress, ref report, ref cancellationToken); })
+                .ContinueWith(ant => { report.NthPNumberResult = ant.Result; });
+
+            //Asynchronously wait for both task to complete
+            await Task.WhenAll(rangeTask, nthTask);
+            cancellationToken.ThrowIfCancellationRequested();
+
             report.ProgressArcAngle = 360;
             progress.Report(report);
         }
