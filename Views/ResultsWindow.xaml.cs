@@ -3,12 +3,12 @@ using ThesisApp.ViewModels;
 
 namespace ThesisApp.Views
 {
-    public partial class MainWindow : Window
+    public partial class ResultsWindow : Window
     {
-        public MainWindow()
+        public ResultsWindow()
         {
             InitializeComponent();
-            this.DataContext = new MainWindowViewModel();
+            this.DataContext = new ResultsWindowViewModel();
         }
     }
 }
