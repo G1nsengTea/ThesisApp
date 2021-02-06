@@ -239,8 +239,9 @@
                                HorizontalAlignment="Center"/>
 
                     <Button Content="Display Results"
-                                Style="{StaticResource btnStyle}"
-                                Command="{Binding DisplayResultsCommand}"/>
+                            Margin="0,5"
+                            Style="{StaticResource btnStyle}"
+                            Command="{Binding DisplayResultsCommand}"/>
                     <!--#endregion-->
 
                 </StackPanel>

@@ -111,6 +111,7 @@
     </ApplicationDefinition>
     <Compile Include="BenchmarkClasses\ResultsDataManager.cs" />
     <Compile Include="Models\ResultsDataModel.cs" />
+    <Compile Include="ViewModels\BaseViewModel.cs" />
     <Compile Include="ViewModels\ResultsWindowViewModel.cs" />
     <Compile Include="Views\ResultsWindow.xaml.cs">
       <DependentUpon>ResultsWindow.xaml</DependentUpon>

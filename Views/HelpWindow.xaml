@@ -63,6 +63,9 @@
                     <LineBreak/>
                     <Run FontWeight="SemiBold" FontFamily="Segoe UI" Text="Reset"/>
                     <Run Text="- Used to reset tests and UI to their default state. It is necessary to manually reset UI only before running application in Synchronous and Parallel modes, since in Asynchronous modes UI will reset automatically."/>
+                    <LineBreak/>
+                    <Run FontWeight="SemiBold" FontFamily="Segoe UI" Text="Display Results"/>
+                    <Run Text="- Used to display the results of all tests executions in a separate window."/>
                 </TextBlock>
 
                 <TextBlock TextAlignment="Center"
@@ -76,7 +79,7 @@
                     <Run Text="- During this test the image that is originally desaturated gradually becomes colorized. The aim of this test is to load CPU with a large amount of array operations. At first coordinate of every pixel of the colorized picture is assigned to a jagged array, then array is shuffled and finally the image is &quot;restored&quot; by replacing colors of resulting bitmap image, which originally contains desaturated picture, with colors of colorized bitmap image, following the pattern of the shuffled array. While running benchmark in asynchronous mode You can observe how picture gradually becomes colorized in a random pattern. Because UI is not updated during synchronous and parallel executions, picture becomes colorized at once, once the test is finished."/>
                     <LineBreak/>
                     <Run FontWeight="SemiBold" FontFamily="Segoe UI" Text="Test 2 &quot;Prime Numbers Test&quot;"/>
-                    <Run Text="- The aim of this test is to give CPU a large number of arithmetic operations. Test consists of 2 parts – in first part computer calculates how many prime numbers there are in a given range (in this case from 2 to 400000). In the second part computer is calculating what is the Nth prime number (in this case 400000th prime number)."/>
+                    <Run Text="- The aim of this test is to give CPU a large number of arithmetic operations. Test consists of 2 parts – in first part computer calculates how many prime numbers there are in a given range (in this case from 2 to 3000000). In the second part computer is calculating what is the Nth prime number (in this case 200000th prime number)."/>
                     <LineBreak/>
                     <Run FontWeight="SemiBold" FontFamily="Segoe UI" Text="Test 3 &quot;Websites Test&quot;"/>
                     <Run Text="- In this test the computer loads in background 10 websites. The aim of this test is to showcase how different threading techniques can improve application performance while executing web requests. In the application UI there are 10 desaturated icons each representing a website. Once corresponding website is downloaded, icon becomes colorized. Similarly to the Image test, icons will become colorized all at once after synchronous and parallel execution, while during asynchronous executions icons will become colorized gradually, once corresponding website is downloaded."/>

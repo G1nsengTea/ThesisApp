@@ -1,18 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using ThesisApp.BenchmarkClasses;
 using ThesisApp.Models;
@@ -24,13 +19,12 @@ namespace ThesisApp.ViewModels
     /// This class is a ViewModel for the MainWindow.
     /// It is responsible for all UI updates
     /// </summary>
-    public class MainWindowViewModel : INotifyPropertyChanged
+    public class MainWindowViewModel : BaseViewModel
     {
         /// <summary>
         /// Local fields that are only used in this ViewModel
         /// </summary>
         #region Fields
-        public event PropertyChangedEventHandler PropertyChanged;
         private static readonly int pNumRangeTest = 3000000;
         private static readonly int pNumNthTest = 200000;
         private readonly Stopwatch ImageTestWatch = new Stopwatch();
@@ -1040,13 +1034,6 @@ namespace ThesisApp.ViewModels
                     StackLogoSource = new BitmapImage(new Uri(@"pack://application:,,,/Resources/Images/Logos/StackLogoColorized.png"));
             }
         }
-
-        //Implementation of PropertyChanged event from Microsoft documentation
-        protected void OnPropertyChanged([CallerMemberName] string name = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-        }
         #endregion
-
     }
 }
