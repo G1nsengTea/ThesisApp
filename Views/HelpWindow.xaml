@@ -23,7 +23,7 @@
         <ScrollViewer Grid.Row="1">
 
             <!-- StackPanel with several TextBlocks to display the inforation -->
-            <StackPanel Orientation="Vertical" Margin="10">
+            <StackPanel Orientation="Vertical" Margin="50,10">
                 
                 <TextBlock HorizontalAlignment="Stretch"
                        Text="This benchmark is part of Oleksii Lahushchenko's bachelor thesis and is used to showcase how different threading techniques influence the behavior of the application. The following are the descriptions of user controls how the application works."
@@ -65,7 +65,7 @@
                     <Run Text="- Used to reset tests and UI to their default state. It is necessary to manually reset UI only before running application in Synchronous and Parallel modes, since in Asynchronous modes UI will reset automatically."/>
                     <LineBreak/>
                     <Run FontWeight="SemiBold" FontFamily="Segoe UI" Text="Display Results"/>
-                    <Run Text="- Used to display the results of all tests executions in a separate window."/>
+                    <Run Text="- Used to display the results of all tests executions in a separate window. Results window consists of table which contains all results and line chart for visual representation of results. Line chart displays only results of executions which were successfully completed (e.g. not cancelled with &quot;Cancel Operation&quot; button)."/>
                 </TextBlock>
 
                 <TextBlock TextAlignment="Center"
